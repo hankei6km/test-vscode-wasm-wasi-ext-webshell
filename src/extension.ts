@@ -1,19 +1,25 @@
-import { commands, ExtensionContext, Uri, window, workspace } from 'vscode'
-import { Wasm } from '@vscode/wasm-wasi'
+import { commands, ExtensionContext, Uri, workspace } from 'vscode'
+import { Wasm, ProcessOptions, RootFileSystem, Stdio } from '@vscode/wasm-wasi'
 
 export async function activate(context: ExtensionContext) {
   const wasm: Wasm = await Wasm.load()
 
-  commands.registerCommand('wasm-wasi-hello.run', async () => {
-    const pty = wasm.createPseudoterminal()
-    const terminal = window.createTerminal({
-      name: 'hello',
-      pty,
-      isTransient: true
-    })
-    terminal.show(true)
-
-    try {
+  // https://github.com/microsoft/vscode-wasm/blob/main/testbeds/python/extension.ts
+  commands.registerCommand(
+    'wasm-wasi-hello.webshell',
+    async (
+      _command: string,
+      args: string[],
+      _cwd: string,
+      stdio: Stdio,
+      rootFileSystem: RootFileSystem
+    ): Promise<number> => {
+      const options: ProcessOptions = {
+        stdio,
+        rootFileSystem,
+        args: [...args],
+        trace: true
+      }
       const filename = Uri.joinPath(
         context.extensionUri,
         'wasm',
@@ -22,21 +28,11 @@ export async function activate(context: ExtensionContext) {
       )
       const bits = await workspace.fs.readFile(filename)
       const module = await WebAssembly.compile(bits)
-      const process = await wasm.createProcess('hello', module, {
-        stdio: pty.stdio
-      })
+      const process = await wasm.createProcess('hello', module, options)
       const result = await process.run()
-      if (result === 0) {
-        await window.showInformationMessage(`Process demo ended successfully`)
-      } else {
-        await window.showErrorMessage(
-          `Process demo ended with error: ${result}`
-        )
-      }
-    } catch (err: any) {
-      void pty.write(`Launching demo failed: ${err.toString()}`)
+      return result
     }
-  })
+  )
 }
 
 export function deactivate() {}
