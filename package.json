@@ -1,5 +1,5 @@
 {
-  "name": "test-vscode-wasm-wasi-ext-hello",
+  "name": "test-vscode-wasm-wasi-ext-webshell",
   "version": "0.0.1",
   "description": "",
   "keywords": [],
