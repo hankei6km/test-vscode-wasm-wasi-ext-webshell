@@ -6,6 +6,7 @@ await esbuild.build({
   bundle: true,
   external: ['vscode'],
   sourcemap: true,
+  platform: 'browser',
   format: 'cjs',
   logLevel: 'info'
 })
